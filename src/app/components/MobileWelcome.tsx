@@ -1,4 +1,4 @@
-import { Shield, Heart } from "lucide-react";
+
 import { Button } from "./ui/button";
 import { useLanguage } from "../LanguageContext";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -21,11 +21,8 @@ export function MobileWelcome({ onNavigate }: MobileWelcomeProps) {
         {/* Logo */}
         <div className="flex justify-center">
           <div className="relative">
-            <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl flex items-center justify-center shadow-lg">
-              <Shield className="w-14 h-14 text-white" />
-            </div>
-            <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shadow-md">
-              <Heart className="w-5 h-5 text-white" fill="white" />
+            <div className="w-48 h-48 flex items-center justify-center">
+              <img src="/logo.png" alt="FeedGuard Logo" className="w-full h-full object-contain drop-shadow-lg" />
             </div>
           </div>
         </div>
