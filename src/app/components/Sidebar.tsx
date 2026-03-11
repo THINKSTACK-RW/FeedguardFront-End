@@ -1,20 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import {
     LayoutDashboard,
     BarChart2,
     Users,
     FileText,
-    HelpCircle,
     Settings,
     Search,
-    ChevronDown,
     Command,
-    Shield,
     MapPin,
     Bell
 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
+import { AuthService } from "../../Services/authService";
+import { User } from "../../Services/types";
 
 interface SidebarProps {
     currentPage: string;
@@ -24,6 +23,17 @@ interface SidebarProps {
 export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
     const { t } = useLanguage();
     const [activeItem, setActiveItem] = useState(currentPage);
+    const [user, setUser] = useState<User | null>(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const userData = await AuthService.getCurrentUser();
+            if (userData?.user) {
+                setUser(userData.user);
+            }
+        };
+        fetchUser();
+    }, []);
 
     const menuItems = [
         { id: "dashboard", label: t.navigation.dashboard, icon: LayoutDashboard },
@@ -38,9 +48,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
         <div className="w-64 h-screen bg-[var(--sidebar-bg)] text-[var(--sidebar-fg)] flex flex-col p-4 border-r border-[#064e3b] sticky top-0 hidden md:flex">
             {/* Brand */}
             <div className="flex items-center gap-3 px-2 mb-8">
-                <div className="w-8 h-8 rounded-lg bg-[var(--sidebar-accent)] flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-white" />
-                </div>
+                <img src="/logo.png" alt="FeedGuard Logo" className="w-16 h-16 object-contain" />
                 <span className="text-xl font-bold text-white tracking-tight">FeedGuard</span>
             </div>
 
@@ -102,14 +110,18 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                     <div className="flex items-center gap-3 px-2 py-2 cursor-pointer hover:bg-white/5 rounded-xl transition-colors">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 to-orange-500 p-[2px]">
                             <img
-                                src="https://github.com/shadcn.png"
-                                alt="User"
-                                className="w-full h-full rounded-full border-2 border-[var(--sidebar-bg)]"
+                                src={user?.name ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff` : "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff"}
+                                alt="User Avatar"
+                                className="w-full h-full rounded-full border-2 border-[var(--sidebar-bg)] object-cover"
                             />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">Alex Williamson</p>
-                            <p className="text-xs text-gray-500 truncate">#dela-1974</p>
+                            <p className="text-sm font-medium text-white truncate">
+                                {user ? user.name : 'Loading...'}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                                {user ? user.email : ''}
+                            </p>
                         </div>
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
                     </div>
