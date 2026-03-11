@@ -1,7 +1,9 @@
 import { useLanguage } from '@/app/LanguageContext';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, FileText, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
+import { ReportService } from '../../../Services/reportService';
 
 interface ReportsHistoryScreenProps {
   onNavigate: (screen: string) => void;
@@ -9,15 +11,38 @@ interface ReportsHistoryScreenProps {
 
 export function ReportsHistoryScreen({ onNavigate }: ReportsHistoryScreenProps) {
   const { t } = useLanguage();
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const reports = [
-    { id: 1, date: '2026-01-18', status: 'normal', meals: 3, daysOfFood: 7 },
-    { id: 2, date: '2026-01-11', status: 'normal', meals: 3, daysOfFood: 5 },
-    { id: 3, date: '2026-01-04', status: 'warning', meals: 2, daysOfFood: 3 },
-    { id: 4, date: '2025-12-28', status: 'normal', meals: 3, daysOfFood: 7 },
-    { id: 5, date: '2025-12-21', status: 'critical', meals: 1, daysOfFood: 1 },
-  ];
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
+        const history = await ReportService.getHistory("CURRENT_USER");
+
+        const mappedReports = history.map((item, index) => {
+          let status = 'normal';
+          const r = item.risk_level?.toLowerCase() || '';
+          if (r.includes('critical') || r.includes('high')) status = 'critical';
+          else if (r.includes('warning') || r.includes('medium')) status = 'warning';
+
+          return {
+            id: item.id || index.toString(),
+            date: item.date,
+            status: status,
+            meals: item.meals_per_day,
+            daysOfFood: item.days_of_food_left
+          };
+        });
+        setReports(mappedReports);
+      } catch (error) {
+        console.error("Error fetching report history:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReports();
+  }, []);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -80,7 +105,11 @@ export function ReportsHistoryScreen({ onNavigate }: ReportsHistoryScreenProps) 
 
       {/* Content */}
       <div className="flex-1 p-6 overflow-y-auto">
-        {reports.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-8">
+            <p className="text-gray-500">{t.common?.loading || "Loading reports..."}</p>
+          </div>
+        ) : reports.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <FileText className="w-10 h-10 text-gray-400" />

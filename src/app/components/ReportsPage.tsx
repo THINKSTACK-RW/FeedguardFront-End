@@ -15,7 +15,9 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { AnalyticsReportService } from "../../Services/analyticsReportService";
+import { DetailedReport } from "../../Services/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -47,129 +49,42 @@ export function ReportsPage({ onNavigate }: ReportsPageProps) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Mock reports data
-  const reports = [
-    {
-      id: "RPT-001",
-      region: "Kibera District",
-      date: "2026-01-07",
-      time: "09:23 AM",
-      households: 245,
-      reporting: 189,
-      stable: 111,
-      atRisk: 89,
-      critical: 45,
-      status: "critical",
-      trend: "up",
-      completeness: 77,
-    },
-    {
-      id: "RPT-002",
-      region: "Makina Village",
-      date: "2026-01-07",
-      time: "09:15 AM",
-      households: 178,
-      reporting: 145,
-      stable: 96,
-      atRisk: 54,
-      critical: 28,
-      status: "warning",
-      trend: "stable",
-      completeness: 81,
-    },
-    {
-      id: "RPT-003",
-      region: "Lindi Area",
-      date: "2026-01-07",
-      time: "08:45 AM",
-      households: 198,
-      reporting: 156,
-      stable: 99,
-      atRisk: 67,
-      critical: 32,
-      status: "warning",
-      trend: "down",
-      completeness: 79,
-    },
-    {
-      id: "RPT-004",
-      region: "Soweto East",
-      date: "2026-01-07",
-      time: "08:12 AM",
-      households: 312,
-      reporting: 267,
-      stable: 232,
-      atRisk: 45,
-      critical: 19,
-      status: "stable",
-      trend: "down",
-      completeness: 86,
-    },
-    {
-      id: "RPT-005",
-      region: "Olympic Estate",
-      date: "2026-01-07",
-      time: "07:55 AM",
-      households: 289,
-      reporting: 234,
-      stable: 198,
-      atRisk: 38,
-      critical: 15,
-      status: "stable",
-      trend: "stable",
-      completeness: 81,
-    },
-    {
-      id: "RPT-006",
-      region: "Gatwekera",
-      date: "2026-01-06",
-      time: "04:32 PM",
-      households: 195,
-      reporting: 167,
-      stable: 142,
-      atRisk: 38,
-      critical: 15,
-      status: "stable",
-      trend: "down",
-      completeness: 86,
-    },
-    {
-      id: "RPT-007",
-      region: "Raila Village",
-      date: "2026-01-06",
-      time: "03:18 PM",
-      households: 167,
-      reporting: 134,
-      stable: 89,
-      atRisk: 52,
-      critical: 26,
-      status: "warning",
-      trend: "up",
-      completeness: 80,
-    },
-    {
-      id: "RPT-008",
-      region: "Mashimoni",
-      date: "2026-01-06",
-      time: "02:45 PM",
-      households: 234,
-      reporting: 198,
-      stable: 165,
-      atRisk: 42,
-      critical: 27,
-      status: "warning",
-      trend: "stable",
-      completeness: 85,
-    },
-  ];
+  const [reports, setReports] = useState<DetailedReport[]>([]);
+  const [summaryStats, setSummaryStats] = useState({
+    totalReports: 0,
+    critical: 0,
+    warning: 0,
+    stable: 0,
+    avgCompleteness: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
-  const summaryStats = {
-    totalReports: 8,
-    critical: 3,
-    warning: 4,
-    stable: 2,
-    avgCompleteness: 82,
-  };
+  useEffect(() => {
+    const fetchReportsData = async () => {
+      try {
+        setLoading(true);
+        const [reportsData, summaryData] = await Promise.all([
+          AnalyticsReportService.getDetailedReports(
+            filterRegion === "all" ? undefined : filterRegion,
+            filterStatus === "all" ? undefined : filterStatus as any // Needs mapping to 'critical' | 'warning' | 'stable'
+          ),
+          AnalyticsReportService.getSummary(
+            filterRegion === "all" ? undefined : filterRegion
+          ),
+        ]);
+        setReports(reportsData);
+        if (summaryData) {
+          setSummaryStats(summaryData);
+        }
+      } catch (error) {
+        console.error("Error fetching reports data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReportsData();
+  }, [filterRegion, filterStatus]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -368,95 +283,109 @@ export function ReportsPage({ onNavigate }: ReportsPageProps) {
               </TableHeader>
               <TableBody>
                 <AnimatePresence>
-                  {reports.map((report) => (
-                    <motion.tr
-                      key={report.id}
-                      className="hover:bg-gray-50 cursor-pointer"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      layout
-                      whileHover={{ scale: 1.01, backgroundColor: "rgba(249, 250, 251, 1)" }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <TableCell className="font-mono text-sm">
-                        {report.id}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-900">{report.region}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <p className="text-gray-900">{report.date}</p>
-                          <p className="text-gray-600">{report.time}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <p className="text-gray-900">
-                            {report.reporting}/{report.households}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <p className="text-sm text-gray-900">
-                            {report.completeness}%
-                          </p>
-                          <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-blue-500"
-                              style={{ width: `${report.completeness}%` }}
-                            />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-green-500 rounded-full" />
-                          <span className="text-sm text-gray-900">
-                            {report.stable}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                          <span className="text-sm text-gray-900">
-                            {report.atRisk}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-red-500 rounded-full" />
-                          <span className="text-sm text-gray-900">
-                            {report.critical}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(report.status)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center">
-                          {getTrendIcon(report.trend)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button size="sm" variant="outline">
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
-                          <Button size="sm" variant="ghost">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
+                  {loading && reports.length === 0 ? (
+                    <motion.tr>
+                      <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                        Loading reports...
                       </TableCell>
                     </motion.tr>
-                  ))}
+                  ) : reports.length === 0 ? (
+                    <motion.tr>
+                      <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                        No reports found.
+                      </TableCell>
+                    </motion.tr>
+                  ) : (
+                    reports.map((report) => (
+                      <motion.tr
+                        key={report.id}
+                        className="hover:bg-gray-50 cursor-pointer"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        layout
+                        whileHover={{ scale: 1.01, backgroundColor: "rgba(249, 250, 251, 1)" }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <TableCell className="font-mono text-sm">
+                          {report.id}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-900">{report.region}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <p className="text-gray-900">{report.date}</p>
+                            <p className="text-gray-600">{report.time}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <p className="text-gray-900">
+                              {report.reporting}/{report.households}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-900">
+                              {report.completeness}%
+                            </p>
+                            <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-blue-500"
+                                style={{ width: `${report.completeness}%` }}
+                              />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full" />
+                            <span className="text-sm text-gray-900">
+                              {report.stable}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-yellow-500 rounded-full" />
+                            <span className="text-sm text-gray-900">
+                              {report.atRisk}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-red-500 rounded-full" />
+                            <span className="text-sm text-gray-900">
+                              {report.critical}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(report.status)}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center">
+                            {getTrendIcon(report.trend)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline">
+                              <Eye className="w-4 h-4 mr-1" />
+                              View
+                            </Button>
+                            <Button size="sm" variant="ghost">
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </motion.tr>
+                    ))
+                  )}
                 </AnimatePresence>
               </TableBody>
             </Table>
@@ -465,7 +394,7 @@ export function ReportsPage({ onNavigate }: ReportsPageProps) {
           {/* Pagination */}
           <div className="flex items-center justify-between mt-6 pt-6 border-t">
             <p className="text-sm text-gray-600">
-              Showing 1 to 8 of 8 reports
+              Showing {reports.length > 0 ? 1 : 0} to {reports.length} of {summaryStats.totalReports} reports
             </p>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" disabled>

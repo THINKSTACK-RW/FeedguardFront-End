@@ -311,6 +311,64 @@ export interface Translations {
 
     noResults: string;
   };
+
+  // Landing Page
+  landing: {
+    heroTitle: string;
+    heroSubtitle: string;
+    heroDescription: string;
+    register: string;
+    learnMore: string;
+    aboutTitle: string;
+    aboutSubtitle: string;
+    aboutDescription: string;
+    howItWorksTitle: string;
+    how1Title: string;
+    how1Desc: string;
+    how2Title: string;
+    how2Desc: string;
+    how3Title: string;
+    how3Desc: string;
+    how4Title: string;
+    how4Desc: string;
+    featuresTitle: string;
+    feature1Title: string;
+    feature1Desc: string;
+    feature2Title: string;
+    feature2Desc: string;
+    feature3Title: string;
+    feature3Desc: string;
+    feature4Title: string;
+    feature4Desc: string;
+    impactTitle: string;
+    impactSubtitle: string;
+    impactDesc: string;
+    faqTitle: string;
+    faq1Q: string;
+    faq1A: string;
+    faq2Q: string;
+    faq2A: string;
+    faq3Q: string;
+    faq3A: string;
+    faq4Q: string;
+    faq4A: string;
+    contactTitle: string;
+    contactSubtitle: string;
+    contactAddressTitle: string;
+    contactAddressValue: string;
+    contactPhoneTitle: string;
+    contactPhoneValue: string;
+    contactEmailTitle: string;
+    contactEmailValue: string;
+    contactNamePlaceholder: string;
+    contactEmailPlaceholder: string;
+    contactMessagePlaceholder: string;
+    contactSend: string;
+    footerAbout: string;
+    footerLinks: string;
+    footerContact: string;
+    footerCopyright: string;
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -595,6 +653,63 @@ export const translations: Record<Language, Translations> = {
 
       noResults: 'Nta makuru yabonetse',
     },
+
+    landing: {
+      heroTitle: 'FeedGuard',
+      heroSubtitle: 'Kwitegura Hakiri Kare ku Mutekano w\'Ibiryo',
+      heroDescription: 'FeedGuard ifasha imiryango n\'abayobozi gukurikirana uko ibiryo bihagaze no gukumira inzara binyuze mu makuru yizewe.',
+      register: 'Kwiyandikisha',
+      learnMore: 'Menya Byinshi',
+      aboutTitle: 'Turi Ba Nde',
+      aboutSubtitle: 'Kuki FeedGuard Yaremwe',
+      aboutDescription: 'FeedGuard yashyiriweho kugabanya ikibazo cy\'inzara. Dukoresha amakuru y\'ako kanya mu gufasha ibyemezo byihuse no kurinda imiryango.',
+      howItWorksTitle: 'Uko Bikora',
+      how1Title: 'Kuzuza Raporo',
+      how1Desc: 'Imiryango itanga amakuru y\'uko ibiryo bihagaze buri gihe.',
+      how2Title: 'Kusanya Amakuru',
+      how2Desc: 'Amakuru yerekana ibyago by\'inzara m\'uturere twose.',
+      how3Title: 'Icyiciro cy\'Ibyago',
+      how3Desc: 'Uturere dushyirwa mu byiciro bitewe n\'ibibazo by\'ibiryo bihari.',
+      how4Title: 'Fata Ibyemezo',
+      how4Desc: 'Abayobozi babona amakuru n\'impuruza kugira ngo batange ubufasha.',
+      featuresTitle: 'Ibyiza Bya FeedGuard',
+      feature1Title: 'Gusesengura Ibyago Ako Kanya',
+      feature1Desc: 'Menya uturere dufite ibibazo byihutirwa.',
+      feature2Title: 'Ikarita Yerekana Amakuru',
+      feature2Desc: 'Reba amakuru y\'igihugu cyangwa uturere ku ikarita nyobora.',
+      feature3Title: 'Porogaramu y\'Indimi Nyinshi',
+      feature3Desc: 'Ifasha kwakira amakuru mu ndimi zitandukanye zirimo Ikinyarwanda.',
+      feature4Title: 'Impuruza Zihuse',
+      feature4Desc: 'Kohereza impuruza zihuse kubayobozi n\'abafatanyabikorwa.',
+      impactTitle: 'Impamvu Bikenewe',
+      impactSubtitle: 'Kurinda Imiryango, Guteza Imbere Igihugu',
+      impactDesc: 'Binyuze mu makuru ahagije, dushobora gukumira ibihe by\'inzara no kubaka igihugu giteye imbere.',
+      faqTitle: 'Ibibazo Bikunze Kubazwa',
+      faq1Q: 'FeedGuard yakoreshwa na nde?',
+      faq1A: 'FeedGuard yakoreshwa n\'imiryango itanga amakuru, n\'abayobozi bayakurikiranira hafi.',
+      faq2Q: 'Ese amakuru yanjye atekanye?',
+      faq2A: 'Yego. Tugira ibanga rikomeye ku makuru y\'abantu kugiti cyabo ndetse akoreshwa byihariye mu bikorwa byo kurwanya inzara.',
+      faq3Q: 'Hakorwa bite kwerekana ibyago by\'inzara?',
+      faq3A: 'Hakoreshwa algorithm ziterura raporo z\'imiryango noneho ikagaragaza niba bameze neza cyangwa bari mu kaga.',
+      faq4Q: 'Ese iki gikorwa kigera mu gihugu hose?',
+      faq4A: 'Tugamije kugera ku rwego rw\'igihugu kugira ngo dutange ubufasha m\'uturere twose.',
+      contactTitle: 'Twandikire',
+      contactSubtitle: 'Turi hano kugira tufatanye n\'inzego zose.',
+      contactAddressTitle: 'Aderesi',
+      contactAddressValue: 'Kigali, Rwanda',
+      contactPhoneTitle: 'Telefoni',
+      contactPhoneValue: '+250 780 000 000',
+      contactEmailTitle: 'Imeyili',
+      contactEmailValue: 'info@feedguard.rw',
+      contactNamePlaceholder: 'Izina ryawe',
+      contactEmailPlaceholder: 'Imeyili yawe',
+      contactMessagePlaceholder: 'Ubutumwa bwawe...',
+      contactSend: 'Ohereza Ubutumwa',
+      footerAbout: 'FeedGuard ifasha uturere kwirinda ibura ry\'ibiryo. Turi ku ruhembe rw\'ikoranabuhanga n\'ubugiraneza.',
+      footerLinks: 'Aho Wakanda',
+      footerContact: 'Twandikire',
+      footerCopyright: '© 2026 FeedGuard. Uburenganzira bwose burabitswe.',
+    },
   },
 
   en: {
@@ -878,6 +993,63 @@ export const translations: Record<Language, Translations> = {
 
       noResults: 'No results found',
     },
+
+    landing: {
+      heroTitle: 'FeedGuard',
+      heroSubtitle: 'Smart Early Warning for Food Security',
+      heroDescription: 'FeedGuard empowers communities and leaders to track food status and prevent food insecurity through reliable, real-time data.',
+      register: 'Register',
+      learnMore: 'Learn More',
+      aboutTitle: 'About Us',
+      aboutSubtitle: 'Why FeedGuard was created',
+      aboutDescription: 'FeedGuard was created to address the critical issue of food insecurity before it becomes a crisis. We use real-time data to drive responsive actions and protect vulnerable communities.',
+      howItWorksTitle: 'How It Works',
+      how1Title: 'Submit Reports',
+      how1Desc: 'Households regularly submit updates on their food availability and supply.',
+      how2Title: 'Aggregate Data',
+      how2Desc: 'Data is instantly analyzed to track risks across regions and communities.',
+      how3Title: 'Risk Classification',
+      how3Desc: 'Regions are dynamically classified based on their food shortage vulnerabilities.',
+      how4Title: 'Actionable Alerts',
+      how4Desc: 'Leaders receive alerts to provide targeted assistance where it is needed most.',
+      featuresTitle: 'Key Features',
+      feature1Title: 'Real-time Risk Detection',
+      feature1Desc: 'Identify critical regions before crises escalate.',
+      feature2Title: 'Interactive Mapping',
+      feature2Desc: 'Pinpoint affected areas on user-friendly map interfaces.',
+      feature3Title: 'Multilingual Support',
+      feature3Desc: 'Accessible to communities in multiple local languages including Kinyarwanda.',
+      feature4Title: 'Early Alert System',
+      feature4Desc: 'Automated warnings when a region crosses critical risk thresholds.',
+      impactTitle: 'Why It Matters',
+      impactSubtitle: 'Protecting Communities, Strengthening Resilience',
+      impactDesc: 'With actionable data, governments and NGOs can prevent crises, empower local communities, and support national resilience planning effectively.',
+      faqTitle: 'Frequently Asked Questions',
+      faq1Q: 'Who can use FeedGuard?',
+      faq1A: 'FeedGuard is used by both the households submitting food situation reports, and local/national leaders monitoring the security status.',
+      faq2Q: 'Is the data secure?',
+      faq2A: 'Yes, we follow strict privacy regulations. Individual data is aggregated and used exclusively for organizing food security assistance.',
+      faq3Q: 'How does risk classification work?',
+      faq3A: 'Our system uses an algorithm that analyzes household submissions (such as meals per day and available food days) to output a regional status level.',
+      faq4Q: 'Are all regions covered?',
+      faq4A: 'FeedGuard is designed for national-level deployment and aims to cover every region continuously.',
+      contactTitle: 'Get in Touch',
+      contactSubtitle: 'We are ready to partner globally and locally.',
+      contactAddressTitle: 'Office',
+      contactAddressValue: 'Kigali, Rwanda (Placeholder)',
+      contactPhoneTitle: 'Phone',
+      contactPhoneValue: '+250 780 000 000',
+      contactEmailTitle: 'Email',
+      contactEmailValue: 'info@feedguard.org',
+      contactNamePlaceholder: 'Your Name',
+      contactEmailPlaceholder: 'Your Email',
+      contactMessagePlaceholder: 'Your Message...',
+      contactSend: 'Send Message',
+      footerAbout: 'FeedGuard ensures food security by providing a smart early warning system for communities globally.',
+      footerLinks: 'Quick Links',
+      footerContact: 'Contact Us',
+      footerCopyright: '© 2026 FeedGuard. All rights reserved.',
+    },
   },
 
   fr: {
@@ -1160,6 +1332,63 @@ export const translations: Record<Language, Translations> = {
       concernsBreakdown: 'Répartition des Préoccupations',
 
       noResults: 'Aucun résultat trouvé',
+    },
+
+    landing: {
+      heroTitle: 'FeedGuard',
+      heroSubtitle: 'Alerte Rapide Intelligente pour la Sécurité Alimentaire',
+      heroDescription: 'FeedGuard permet aux communautés et aux dirigeants de suivre le statut alimentaire et de prévenir l\'insécurité alimentaire grâce à des données fiables et en temps réel.',
+      register: 'S\'inscrire',
+      learnMore: 'En Savoir Plus',
+      aboutTitle: 'À Propos de Nous',
+      aboutSubtitle: 'Pourquoi FeedGuard a été créé',
+      aboutDescription: 'FeedGuard a été créé pour résoudre le problème critique de l\'insécurité alimentaire avant qu\'il ne devienne une crise. Nous utilisons des données en temps réel pour mener des actions réactives et protéger les communautés vulnérables.',
+      howItWorksTitle: 'Comment Ça Marche',
+      how1Title: 'Soumettre des Rapports',
+      how1Desc: 'Les ménages soumettent régulièrement des mises à jour sur leur disponibilité alimentaire et leur approvisionnement.',
+      how2Title: 'Agréger les Données',
+      how2Desc: 'Les données sont instantanément analysées pour suivre les risques dans les régions et les communautés.',
+      how3Title: 'Classification des Risques',
+      how3Desc: 'Les régions sont classées dynamiquement en fonction de leurs vulnérabilités face à la pénurie alimentaire.',
+      how4Title: 'Alertes Actionnables',
+      how4Desc: 'Les dirigeants reçoivent des alertes pour fournir une assistance ciblée là où elle est le plus nécessaire.',
+      featuresTitle: 'Fonctionnalités Clés',
+      feature1Title: 'Détection des Risques en Temps Réel',
+      feature1Desc: 'Identifiez les régions critiques avant que la crise ne s\'aggrave.',
+      feature2Title: 'Cartographie Interactive',
+      feature2Desc: 'Localisez les zones concernées sur des interfaces de cartes conviviales.',
+      feature3Title: 'Support Multilingue',
+      feature3Desc: 'Accessible aux communautés dans plusieurs langues locales dont le Kinyarwanda.',
+      feature4Title: 'Système d\'Alerte Précoce',
+      feature4Desc: 'Avertissements automatisés lorsqu\'une région franchit des seuils de risque critiques.',
+      impactTitle: 'Pourquoi C\'est Important',
+      impactSubtitle: 'Protéger les Communautés, Renforcer la Résilience',
+      impactDesc: 'Avec des données exploitables, les gouvernements et les ONG peuvent prévenir les crises, autonomiser les communautés locales et soutenir efficacement la planification nationale de la résilience.',
+      faqTitle: 'Foire Aux Questions',
+      faq1Q: 'Qui peut utiliser FeedGuard?',
+      faq1A: 'FeedGuard est utilisé à la fois par les ménages qui soumettent des rapports de situation alimentaire, et par les dirigeants locaux/nationaux qui surveillent l\'état de sécurité.',
+      faq2Q: 'Les données sont-elles sécurisées?',
+      faq2A: 'Oui, nous respectons strictement la réglementation sur la confidentialité. Les données individuelles sont agrégées et utilisées exclusivement pour organiser l\'assistance à la sécurité alimentaire.',
+      faq3Q: 'Comment fonctionne la classification des risques?',
+      faq3A: 'Notre système utilise un algorithme qui analyse les soumissions des ménages (comme les repas par jour et les jours de nourriture disponibles) pour émettre un niveau de statut régional.',
+      faq4Q: 'Toutes les régions sont-elles couvertes?',
+      faq4A: 'FeedGuard est conçu pour un déploiement au niveau national et vise à couvrir toutes les régions en permanence.',
+      contactTitle: 'Prendre Contact',
+      contactSubtitle: 'Nous sommes prêts à établir des partenariats à l\'échelle mondiale et locale.',
+      contactAddressTitle: 'Bureau',
+      contactAddressValue: 'Kigali, Rwanda (Espace réservé)',
+      contactPhoneTitle: 'Téléphone',
+      contactPhoneValue: '+250 780 000 000',
+      contactEmailTitle: 'E-mail',
+      contactEmailValue: 'info@feedguard.org',
+      contactNamePlaceholder: 'Votre Nom',
+      contactEmailPlaceholder: 'Votre E-mail',
+      contactMessagePlaceholder: 'Votre Message...',
+      contactSend: 'Envoyer le Message',
+      footerAbout: 'FeedGuard assure la sécurité alimentaire en fournissant un système intelligent d\'alerte précoce pour les communautés du monde entier.',
+      footerLinks: 'Liens Rapides',
+      footerContact: 'Nous Contacter',
+      footerCopyright: '© 2026 FeedGuard. Tous droits réservés.',
     },
   },
 };

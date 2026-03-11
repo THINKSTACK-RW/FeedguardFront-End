@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   Bell,
   ArrowUpRight,
@@ -22,6 +23,8 @@ import {
 
 import { useLanguage } from "../LanguageContext";
 import { Button } from "./ui/button";
+import { DashboardService } from "../../Services/dashboardService";
+import { DashboardStats, TrendData, RegionBreakdown } from "../../Services/types";
 
 interface DashboardPageProps {
   onNavigate: (page: string) => void;
@@ -29,6 +32,33 @@ interface DashboardPageProps {
 
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const { t } = useLanguage();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [trends, setTrends] = useState<TrendData[]>([]);
+  const [regions, setRegions] = useState<RegionBreakdown[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [statsData, trendsData, regionsData] = await Promise.all([
+          DashboardService.getStats(),
+          DashboardService.getTrends(),
+          DashboardService.getRegions(),
+        ]);
+        setStats(statsData);
+        setTrends(trendsData);
+        setRegions(regionsData);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        // If error, it might be expected during development if backend isn't up
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   // Animation variants
   const containerVariants: Variants = {
@@ -49,24 +79,6 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       transition: { type: "spring", stiffness: 300, damping: 24 }
     }
   };
-
-  // Mock Data - FeedGuard Context
-  const chartData = [
-    { name: "Mon", stable: 45, atRisk: 12 },
-    { name: "Tue", stable: 52, atRisk: 15 },
-    { name: "Wed", stable: 48, atRisk: 10 },
-    { name: "Thu", stable: 61, atRisk: 18 },
-    { name: "Fri", stable: 55, atRisk: 14 },
-    { name: "Sat", stable: 67, atRisk: 9 },
-    { name: "Sun", stable: 70, atRisk: 8 },
-  ];
-
-  const regionData = [
-    { region: "Kibera District", households: "2,453", risk: "Critical", trend: "up", status: "Action Req" },
-    { region: "Lindi Area", households: "1,211", risk: "Warning", trend: "up", status: "Monitor" },
-    { region: "Makina Village", households: "3,364", risk: "Stable", trend: "down", status: "Good" },
-    { region: "Soweto West", households: "1,855", risk: "Stable", trend: "down", status: "Good" },
-  ];
 
   return (
     <motion.div
@@ -101,7 +113,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           <div className="flex justify-between items-start mb-8">
             <div>
               <p className="text-gray-400 text-sm font-medium mb-1">{t.dashboard.totalHouseholds}</p>
-              <h3 className="text-4xl font-bold tracking-tight">8,942</h3>
+              <h3 className="text-4xl font-bold tracking-tight">{stats ? stats.totalHouseholds.toLocaleString() : "..."}</h3>
             </div>
             <div className="p-3 bg-white/10 rounded-full backdrop-blur-sm">
               <Users className="w-6 h-6 text-white" />
@@ -111,7 +123,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           <div className="flex items-end justify-between">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full backdrop-blur-sm">
               <ArrowUpRight className="w-4 h-4 text-green-400" />
-              <span className="text-sm font-medium text-green-400">+12%</span>
+              <span className="text-sm font-medium text-green-400">{stats ? stats.growth : "+0%"}</span>
             </div>
             <span className="text-sm text-gray-400">{t.dashboard.last30Days}</span>
           </div>
@@ -126,7 +138,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           <div className="flex justify-between items-start mb-8">
             <div>
               <p className="text-gray-500 text-sm font-medium mb-1">{t.dashboard.criticalAlerts}</p>
-              <h3 className="text-4xl font-bold tracking-tight text-gray-900">145</h3>
+              <h3 className="text-4xl font-bold tracking-tight text-gray-900">{stats ? stats.criticalAlerts.toLocaleString() : "..."}</h3>
             </div>
             <div className="p-3 bg-red-50 rounded-full">
               <AlertCircle className="w-6 h-6 text-red-500" />
@@ -147,7 +159,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           <div className="flex justify-between items-start mb-8">
             <div>
               <p className="opacity-80 text-sm font-medium mb-1">{t.dashboard.mealsPerDay}</p>
-              <h3 className="text-4xl font-bold tracking-tight">2.1</h3>
+              <h3 className="text-4xl font-bold tracking-tight">{stats ? stats.avgMealsPerDay.toFixed(1) : "..."}</h3>
             </div>
             <div className="p-3 bg-white/50 rounded-full backdrop-blur-sm">
               <Utensils className="w-6 h-6 text-[var(--card-green-fg)]" />
@@ -181,7 +193,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
 
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={trends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorStable" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
@@ -213,7 +225,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           </div>
 
           <div className="flex-1 space-y-6">
-            {regionData.map((item, index) => (
+            {regions.map((item, index) => (
               <div key={index} className="flex items-center justify-between group cursor-pointer">
                 <div className="flex items-center gap-4">
                   <div className={`w-2 h-12 rounded-full ${item.risk === 'Critical' ? 'bg-red-500' :

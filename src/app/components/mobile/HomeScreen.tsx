@@ -1,7 +1,9 @@
 import { useLanguage } from '@/app/LanguageContext';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
+import { useState, useEffect } from 'react';
 import { FileText, Bell, HelpCircle, User, Leaf } from 'lucide-react';
+import { ReportService } from '../../../Services/reportService';
 
 interface HomeScreenProps {
   onNavigate: (screen: string) => void;
@@ -9,7 +11,29 @@ interface HomeScreenProps {
 
 export function HomeScreen({ onNavigate }: HomeScreenProps) {
   const { t } = useLanguage();
-  const hasReportedToday = false; // Mock data
+  const [hasReportedToday, setHasReportedToday] = useState(false);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const history = await ReportService.getHistory("CURRENT_USER");
+        if (history && history.length > 0) {
+          const latest = new Date(history[0].date);
+          const today = new Date();
+          if (
+            latest.getDate() === today.getDate() &&
+            latest.getMonth() === today.getMonth() &&
+            latest.getFullYear() === today.getFullYear()
+          ) {
+            setHasReportedToday(true);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch report status:", e);
+      }
+    };
+    fetchStatus();
+  }, []);
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-green-50 to-green-100">

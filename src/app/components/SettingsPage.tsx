@@ -3,11 +3,64 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Globe, Bell, Shield, User, Smartphone, Mail } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Globe, Bell, Shield, User, Smartphone, Mail, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "../LanguageContext";
+import { AuthService } from "../../Services/authService";
+import { Input } from "./ui/input";
 
 export function SettingsPage() {
     const { language, setLanguage, t } = useLanguage();
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
+    const [role, setRole] = useState("");
+
+    // UI states
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const res = await AuthService.getCurrentUser();
+                if (res?.user) {
+                    setName(res.user.name || "");
+                    setEmail(res.user.email || "");
+                    setRole(res.user.role || "");
+                    // Note: Phone isn't standard in the current generic User interface, 
+                    // but we can map it if it exists or leave empty.
+                    setPhone((res.user as any).phone || "");
+                }
+            } catch (err) {
+                console.error("Failed to load user info", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchUser();
+    }, []);
+
+    const handleSaveProfile = async () => {
+        setMessage("");
+        setError("");
+        setIsSaving(true);
+        try {
+            // updateProfile payload can contain whatever fields the backend expects
+            const res = await AuthService.updateProfile({
+                name,
+                email,
+                ...(phone ? { phone: phone as any } : {})
+            });
+            setMessage("Profile updated successfully");
+        } catch (err: any) {
+            setError(err.message || "Failed to update profile");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div className="space-y-6 max-w-4xl mx-auto">
@@ -102,39 +155,83 @@ export function SettingsPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Full Name</Label>
-                                <div className="p-2 border rounded-md bg-gray-50 text-gray-700">Alex Williamson</div>
+                        {message && (
+                            <div className="bg-green-50 text-green-700 p-3 rounded-md flex items-center gap-2 text-sm border border-green-200">
+                                <CheckCircle2 className="w-4 h-4" />
+                                {message}
                             </div>
-                            <div className="space-y-2">
-                                <Label>Role</Label>
-                                <div className="flex items-center gap-2 p-2 border rounded-md bg-gray-50 text-gray-700">
-                                    <Shield className="w-4 h-4 text-green-600" />
-                                    Community Leader
+                        )}
+                        {error && (
+                            <div className="bg-red-50 text-red-700 p-3 rounded-md flex items-center gap-2 text-sm border border-red-200">
+                                <AlertCircle className="w-4 h-4" />
+                                {error}
+                            </div>
+                        )}
+
+                        {isLoading ? (
+                            <div className="py-8 text-center text-gray-400">Loading profile data...</div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Full Name</Label>
+                                    <Input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="bg-gray-50 focus:bg-white transition-colors"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Role</Label>
+                                    <div className="flex items-center gap-2 px-3 h-10 border rounded-md bg-gray-100 text-gray-500 cursor-not-allowed">
+                                        <Shield className="w-4 h-4" />
+                                        <span className="capitalize">{role || "Not specified"}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-400">Role changes must be processed by an administrator.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Email</Label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Mail className="w-4 h-4 text-gray-400" />
+                                        </div>
+                                        <Input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="pl-9 bg-gray-50 focus:bg-white transition-colors"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Phone</Label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Smartphone className="w-4 h-4 text-gray-400" />
+                                        </div>
+                                        <Input
+                                            type="tel"
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                            placeholder="+250 788 000 000"
+                                            className="pl-9 bg-gray-50 focus:bg-white transition-colors"
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Email</Label>
-                                <div className="flex items-center gap-2 p-2 border rounded-md bg-gray-50 text-gray-700">
-                                    <Mail className="w-4 h-4 text-gray-400" />
-                                    alex.w@feedguard.org
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Phone</Label>
-                                <div className="flex items-center gap-2 p-2 border rounded-md bg-gray-50 text-gray-700">
-                                    <Smartphone className="w-4 h-4 text-gray-400" />
-                                    +250 788 123 456
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </CardContent>
                 </Card>
 
                 <div className="flex justify-end gap-3">
-                    <Button variant="outline">Cancel</Button>
-                    <Button className="bg-[var(--sidebar-bg)] hover:bg-gray-800 text-white">Save Changes</Button>
+                    <Button variant="outline" onClick={() => window.location.reload()}>Cancel</Button>
+                    <Button
+                        onClick={handleSaveProfile}
+                        disabled={isSaving || isLoading}
+                        className="bg-[var(--sidebar-bg)] hover:bg-gray-800 text-white"
+                    >
+                        {isSaving ? "Saving..." : "Save Changes"}
+                    </Button>
                 </div>
             </div>
         </div>
