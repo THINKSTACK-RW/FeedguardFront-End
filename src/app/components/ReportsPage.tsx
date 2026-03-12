@@ -13,10 +13,15 @@ import {
   Eye,
   TrendingUp,
   TrendingDown,
+  ChevronRight,
+  ChevronUp,
+  User,
+  Phone,
+  Mail,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect } from "react";
-import { AnalyticsReportService } from "../../Services/analyticsReportService";
+import { AnalyticsReportService, RegionalReport, IndividualResponse } from "../../Services/analyticsReportService";
 import { DetailedReport } from "../../Services/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -49,7 +54,8 @@ export function ReportsPage({ onNavigate }: ReportsPageProps) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [reports, setReports] = useState<DetailedReport[]>([]);
+  const [regionalReports, setRegionalReports] = useState<RegionalReport[]>([]);
+  const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
   const [summaryStats, setSummaryStats] = useState({
     totalReports: 0,
     critical: 0,
@@ -60,31 +66,67 @@ export function ReportsPage({ onNavigate }: ReportsPageProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchReportsData = async () => {
+    const fetchRegionalReportsData = async () => {
       try {
         setLoading(true);
-        const [reportsData, summaryData] = await Promise.all([
-          AnalyticsReportService.getDetailedReports(
-            filterRegion === "all" ? undefined : filterRegion,
-            filterStatus === "all" ? undefined : filterStatus as any // Needs mapping to 'critical' | 'warning' | 'stable'
-          ),
-          AnalyticsReportService.getSummary(
-            filterRegion === "all" ? undefined : filterRegion
-          ),
-        ]);
-        setReports(reportsData);
-        if (summaryData) {
-          setSummaryStats(summaryData);
-        }
+        const reportsData = await AnalyticsReportService.getRegionalReports(
+          filterRegion === "all" ? undefined : filterRegion,
+          filterStatus === "all" ? undefined : filterStatus as any
+        );
+        setRegionalReports(reportsData);
+
+        // Calculate summary stats from regional reports
+        const totalReports = reportsData.reduce((sum, report) => sum + report.totalResponses, 0);
+        const totalCritical = reportsData.reduce((sum, report) => sum + report.critical, 0);
+        const totalWarning = reportsData.reduce((sum, report) => sum + report.warning, 0);
+        const totalStable = reportsData.reduce((sum, report) => sum + report.stable, 0);
+        
+        setSummaryStats({
+          totalReports,
+          critical: totalCritical,
+          warning: totalWarning,
+          stable: totalStable,
+          avgCompleteness: 85, // Mock value
+        });
       } catch (error) {
-        console.error("Error fetching reports data:", error);
+        console.error("Error fetching regional reports data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchReportsData();
+    fetchRegionalReportsData();
   }, [filterRegion, filterStatus]);
+
+  const toggleLocationExpansion = (locationId: string) => {
+    setExpandedLocations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(locationId)) {
+        newSet.delete(locationId);
+      } else {
+        newSet.add(locationId);
+      }
+      return newSet;
+    });
+  };
+
+  const downloadLocationReport = async (locationId: string, locationName: string) => {
+    try {
+      const response = await fetch(`/api/reports/location/${locationId}/export?format=csv`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `${locationName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_responses.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading location report:", error);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -255,158 +297,213 @@ export function ReportsPage({ onNavigate }: ReportsPageProps) {
         </CardContent>
       </Card>
 
-      {/* Reports Table */}
+      {/* Regional Reports */}
       <Card>
         <CardHeader>
           <CardTitle>Regional Food Security Reports</CardTitle>
           <CardDescription>
-            Detailed breakdown of household reporting and status
+            Click on any location to view individual responses from each citizen
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Report ID</TableHead>
-                  <TableHead>Region</TableHead>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>Households</TableHead>
-                  <TableHead>Response Rate</TableHead>
-                  <TableHead>Stable</TableHead>
-                  <TableHead>At Risk</TableHead>
-                  <TableHead>Critical</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Trend</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <AnimatePresence>
-                  {loading && reports.length === 0 ? (
-                    <motion.tr>
-                      <TableCell colSpan={11} className="text-center py-8 text-gray-500">
-                        Loading reports...
-                      </TableCell>
-                    </motion.tr>
-                  ) : reports.length === 0 ? (
-                    <motion.tr>
-                      <TableCell colSpan={11} className="text-center py-8 text-gray-500">
-                        No reports found.
-                      </TableCell>
-                    </motion.tr>
-                  ) : (
-                    reports.map((report) => (
-                      <motion.tr
-                        key={report.id}
-                        className="hover:bg-gray-50 cursor-pointer"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        layout
-                        whileHover={{ scale: 1.01, backgroundColor: "rgba(249, 250, 251, 1)" }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <TableCell className="font-mono text-sm">
-                          {report.id}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-900">{report.region}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <p className="text-gray-900">{report.date}</p>
-                            <p className="text-gray-600">{report.time}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <p className="text-gray-900">
-                              {report.reporting}/{report.households}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <p className="text-sm text-gray-900">
-                              {report.completeness}%
-                            </p>
-                            <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-blue-500"
-                                style={{ width: `${report.completeness}%` }}
-                              />
+          <div className="space-y-4">
+            <AnimatePresence>
+              {loading && regionalReports.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  Loading regional reports...
+                </div>
+              ) : regionalReports.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No reports found.
+                </div>
+              ) : (
+                regionalReports.map((region) => (
+                  <motion.div
+                    key={region.locationId}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    layout
+                  >
+                    {/* Location Summary Card */}
+                    <Card 
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => toggleLocationExpansion(region.locationId)}
+                    >
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3">
+                              <MapPin className="w-5 h-5 text-gray-400" />
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                  {region.locationName}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  {region.district} → {region.sector} → {region.village}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div className="text-center">
+                                <p className="text-2xl font-bold text-blue-600">{region.totalResponses}</p>
+                                <p className="text-xs text-gray-600">Total Responses</p>
+                              </div>
+                              
+                              <div className="text-center">
+                                <p className="text-2xl font-bold text-green-600">{region.stable}</p>
+                                <p className="text-xs text-gray-600">Stable</p>
+                              </div>
+                              
+                              <div className="text-center">
+                                <p className="text-2xl font-bold text-yellow-600">{region.warning}</p>
+                                <p className="text-xs text-gray-600">At Risk</p>
+                              </div>
+                              
+                              <div className="text-center">
+                                <p className="text-2xl font-bold text-red-600">{region.critical}</p>
+                                <p className="text-xs text-gray-600">Critical</p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-4 mt-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">Avg Meals/Day:</span>
+                                <span className="text-sm font-semibold">{region.avgMealsPerDay}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">Avg Days Food:</span>
+                                <span className="text-sm font-semibold">{region.avgDaysOfFoodLeft}</span>
+                              </div>
+                              {getStatusBadge(region.overallStatus.toLowerCase())}
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-green-500 rounded-full" />
-                            <span className="text-sm text-gray-900">
-                              {report.stable}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                            <span className="text-sm text-gray-900">
-                              {report.atRisk}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-red-500 rounded-full" />
-                            <span className="text-sm text-gray-900">
-                              {report.critical}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(report.status)}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-center">
-                            {getTrendIcon(report.trend)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
+                          
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadLocationReport(region.locationId, region.locationName);
+                              }}
+                            >
+                              <Download className="w-4 h-4 mr-1" />
+                              Download
                             </Button>
-                            <Button size="sm" variant="ghost">
-                              <Download className="w-4 h-4" />
-                            </Button>
+                            {expandedLocations.has(region.locationId) ? (
+                              <ChevronUp className="w-5 h-5 text-gray-400" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5 text-gray-400" />
+                            )}
                           </div>
-                        </TableCell>
-                      </motion.tr>
-                    ))
-                  )}
-                </AnimatePresence>
-              </TableBody>
-            </Table>
-          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between mt-6 pt-6 border-t">
-            <p className="text-sm text-gray-600">
-              Showing {reports.length > 0 ? 1 : 0} to {reports.length} of {summaryStats.totalReports} reports
-            </p>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled>
-                Previous
-              </Button>
-              <Button variant="outline" size="sm" className="bg-green-600 text-white hover:bg-green-700">
-                1
-              </Button>
-              <Button variant="outline" size="sm" disabled>
-                Next
-              </Button>
-            </div>
+                    {/* Individual Responses (Expandable) */}
+                    <AnimatePresence>
+                      {expandedLocations.has(region.locationId) && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="overflow-hidden"
+                        >
+                          <Card className="mt-2 border-l-4 border-l-blue-500">
+                            <CardHeader>
+                              <CardTitle className="text-lg">Individual Responses</CardTitle>
+                              <CardDescription>
+                                Detailed responses from {region.totalResponses} citizens in {region.locationName}
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Citizen</TableHead>
+                                      <TableHead>Contact</TableHead>
+                                      <TableHead>Date</TableHead>
+                                      <TableHead>Meals/Day</TableHead>
+                                      <TableHead>Days Food</TableHead>
+                                      <TableHead>Food Change</TableHead>
+                                      <TableHead>Shocks</TableHead>
+                                      <TableHead>Status</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {region.responses.map((response) => (
+                                      <TableRow key={response.id} className="hover:bg-gray-50">
+                                        <TableCell>
+                                          <div className="flex items-center gap-2">
+                                            <User className="w-4 h-4 text-gray-400" />
+                                            <div>
+                                              <p className="text-sm font-medium">{response.citizenName}</p>
+                                              <p className="text-xs text-gray-600">ID: {response.citizenId}</p>
+                                            </div>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex items-center gap-1">
+                                            <Phone className="w-3 h-3 text-gray-400" />
+                                            <span className="text-sm">{response.citizenPhone}</span>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="text-sm">
+                                            <p className="text-gray-900">{response.date}</p>
+                                            <p className="text-gray-600">{response.time}</p>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <span className="text-sm font-medium">{response.mealsPerDay || 'N/A'}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                          <span className="text-sm font-medium">{response.daysOfFoodLeft || 'N/A'}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                          <span className="text-sm">{response.foodChangeType || 'None'}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="text-sm">
+                                            {response.shocksExperienced.length > 0 ? (
+                                              <div className="space-y-1">
+                                                {response.shocksExperienced.slice(0, 2).map((shock, index) => (
+                                                  <div key={index} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                                    {shock}
+                                                  </div>
+                                                ))}
+                                                {response.shocksExperienced.length > 2 && (
+                                                  <div className="text-xs text-gray-600">
+                                                    +{response.shocksExperienced.length - 2} more
+                                                  </div>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <span className="text-sm text-gray-600">None</span>
+                                            )}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          {getStatusBadge(response.riskLevel)}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
           </div>
         </CardContent>
       </Card>
