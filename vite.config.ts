@@ -17,7 +17,7 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0', // Explicitly bind to all interfaces
-    port: 5173, // Default port for local development
+    host: '0.0.0.0', // Bind to all interfaces for Render
+    port: 10000, // Use Render's port
   },
 })
