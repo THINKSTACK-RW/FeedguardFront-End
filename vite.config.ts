@@ -16,4 +16,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    host: true, // Expose to all interfaces
+    port: 5173, // Default port for local development
+  },
 })
