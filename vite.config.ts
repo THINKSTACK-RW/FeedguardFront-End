@@ -17,7 +17,7 @@ export default defineConfig({
     },
   },
   server: {
-    host: true, // Expose to all interfaces
+    host: '0.0.0.0', // Explicitly bind to all interfaces
     port: 5173, // Default port for local development
   },
 })
