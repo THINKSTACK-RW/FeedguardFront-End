@@ -1,6 +1,7 @@
 import { CheckCircle2, Home, Share2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useLanguage } from "../LanguageContext";
+import { useEffect, useState } from "react";
 
 interface MobileConfirmationProps {
   onNavigate: (screen: string) => void;
@@ -8,6 +9,21 @@ interface MobileConfirmationProps {
 
 export function MobileConfirmation({ onNavigate }: MobileConfirmationProps) {
   const { t } = useLanguage();
+  const [reportResult, setReportResult] = useState<{
+    risk_level?: string;
+    confidence?: number | null;
+    prediction_source?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem("last_food_report_result");
+    if (!raw) return;
+    try {
+      setReportResult(JSON.parse(raw));
+    } catch (error) {
+      console.error("Failed to read last report result:", error);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex flex-col items-center justify-center p-6">
@@ -32,6 +48,17 @@ export function MobileConfirmation({ onNavigate }: MobileConfirmationProps) {
           <h3 className="text-lg text-gray-900">
             {t.confirmation.whatNext}
           </h3>
+          {reportResult && (
+            <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 text-left">
+              <p className="text-sm text-blue-700">AI Assessment</p>
+              <p className="text-base font-semibold text-blue-900 capitalize">
+                Risk: {reportResult.risk_level || "unknown"}
+              </p>
+              <p className="text-xs text-blue-700">
+                Confidence: {typeof reportResult.confidence === "number" ? `${(reportResult.confidence * 100).toFixed(0)}%` : "N/A"}
+              </p>
+            </div>
+          )}
           <div className="space-y-3 text-left">
             <div className="flex gap-3">
               <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />

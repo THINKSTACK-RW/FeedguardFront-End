@@ -30,6 +30,7 @@ export interface IndividualResponse {
   foodChangeType: string;
   shocksExperienced: string[];
   riskLevel: string;
+  confidence?: number | null;
   status: string;
 }
 

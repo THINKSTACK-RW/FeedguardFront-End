@@ -431,6 +431,7 @@ export function ReportsPage({ onNavigate }: ReportsPageProps) {
                                       <TableHead>Days Food</TableHead>
                                       <TableHead>Food Change</TableHead>
                                       <TableHead>Shocks</TableHead>
+                                      <TableHead>AI Confidence</TableHead>
                                       <TableHead>Status</TableHead>
                                     </TableRow>
                                   </TableHeader>
@@ -486,6 +487,13 @@ export function ReportsPage({ onNavigate }: ReportsPageProps) {
                                               <span className="text-sm text-gray-600">None</span>
                                             )}
                                           </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <span className="text-sm font-medium">
+                                            {typeof response.confidence === 'number'
+                                              ? `${(response.confidence * 100).toFixed(0)}%`
+                                              : 'N/A'}
+                                          </span>
                                         </TableCell>
                                         <TableCell>
                                           {getStatusBadge(response.riskLevel)}

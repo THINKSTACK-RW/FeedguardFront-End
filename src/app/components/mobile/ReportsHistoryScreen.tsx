@@ -31,7 +31,8 @@ export function ReportsHistoryScreen({ onNavigate }: ReportsHistoryScreenProps) 
             date: item.date,
             status: status,
             meals: item.meals_per_day,
-            daysOfFood: item.days_of_food_left
+            daysOfFood: item.days_of_food_left,
+            confidence: item.ai_confidence
           };
         });
         setReports(mappedReports);
@@ -149,6 +150,12 @@ export function ReportsHistoryScreen({ onNavigate }: ReportsHistoryScreenProps) 
                       <div>
                         <span className="text-gray-600">{t.reportsPage.daysOfFood}: </span>
                         <span className="font-medium text-gray-800">{report.daysOfFood} days</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">AI Confidence: </span>
+                        <span className="font-medium text-gray-800">
+                          {typeof report.confidence === 'number' ? `${(report.confidence * 100).toFixed(0)}%` : 'N/A'}
+                        </span>
                       </div>
                     </div>
                   </div>
