@@ -3,7 +3,16 @@ import { useLanguage } from '@/app/LanguageContext';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Checkbox } from '@/app/components/ui/checkbox';
-import { ChevronLeft, Check } from 'lucide-react';
+import { ChevronLeft, Check, Sparkles } from 'lucide-react';
+import { ReportService } from '@/Services/reportService';
+import { FoodRiskPrediction } from '@/Services/types';
+
+// Generate a UUID for the current user session
+const CURRENT_USER_ID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  const r = Math.random() * 16 | 0;
+  const v = c === 'x' ? r : (r & 0x3 | 0x8);
+  return v.toString(16);
+});
 
 interface NewFoodReportScreenProps {
   onNavigate: (screen: string) => void;
@@ -12,6 +21,9 @@ interface NewFoodReportScreenProps {
 export function NewFoodReportScreen({ onNavigate }: NewFoodReportScreenProps) {
   const { t } = useLanguage();
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [prediction, setPrediction] = useState<FoodRiskPrediction | null>(null);
+  const [submitError, setSubmitError] = useState('');
   const [formData, setFormData] = useState({
     meals: '',
     daysOfFood: '',
@@ -38,11 +50,48 @@ export function NewFoodReportScreen({ onNavigate }: NewFoodReportScreenProps) {
     setFormData({ ...formData, shocks });
   };
 
-  const handleNext = () => {
+  const buildPayload = () => ({
+    citizen_id: CURRENT_USER_ID,
+    meals_per_day: Number(formData.meals),
+    days_of_food_left: Number(formData.daysOfFood),
+    food_change_type: formData.foodChange,
+    shocks_experienced: formData.shocks,
+    channel: 'APP',
+  });
+
+  const handleNext = async () => {
+    setSubmitError('');
     if (step < 4) {
       setStep(step + 1);
     } else {
-      onNavigate('confirmation');
+      try {
+        setIsSubmitting(true);
+        const payload = buildPayload();
+        const riskPreview = await ReportService.predictRisk({
+          citizen_id: payload.citizen_id,
+          meals_per_day: payload.meals_per_day,
+          days_of_food_left: payload.days_of_food_left,
+          food_change_type: payload.food_change_type,
+          shocks_experienced: payload.shocks_experienced,
+        });
+        setPrediction(riskPreview);
+
+        const response = await ReportService.submitReport(payload);
+        const finalConfidence = response.response.confidence ?? riskPreview.confidence ?? null;
+        sessionStorage.setItem(
+          'last_food_report_result',
+          JSON.stringify({
+            risk_level: response.response.risk_level,
+            confidence: finalConfidence,
+            prediction_source: response.response.prediction_source ?? riskPreview.source ?? 'ai',
+          })
+        );
+        onNavigate('confirmation');
+      } catch (error) {
+        setSubmitError(error instanceof Error ? error.message : 'Failed to submit report');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -254,6 +303,27 @@ export function NewFoodReportScreen({ onNavigate }: NewFoodReportScreenProps) {
               onCheckedChange={() => handleShockToggle('other')}
               label={t.report.shockOther}
             />
+
+            {prediction && (
+              <Card className="p-4 border-2 border-blue-200 bg-blue-50">
+                <div className="flex items-start gap-3">
+                  <Sparkles className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-blue-700">AI predicted risk</p>
+                    <p className="text-base font-semibold text-blue-900 capitalize">{prediction.risk_level}</p>
+                    <p className="text-xs text-blue-700">
+                      Confidence: {typeof prediction.confidence === 'number' ? `${(prediction.confidence * 100).toFixed(0)}%` : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {submitError && (
+              <Card className="p-3 border-2 border-red-200 bg-red-50">
+                <p className="text-sm text-red-700">{submitError}</p>
+              </Card>
+            )}
           </div>
         )}
       </div>
@@ -262,10 +332,10 @@ export function NewFoodReportScreen({ onNavigate }: NewFoodReportScreenProps) {
       <div className="p-6 border-t">
         <Button
           onClick={handleNext}
-          disabled={!canProceed()}
+          disabled={!canProceed() || isSubmitting}
           className="w-full h-14 bg-green-600 hover:bg-green-700 text-lg"
         >
-          {step === 4 ? t.report.submitReport : t.common.next}
+          {step === 4 ? (isSubmitting ? 'Submitting...' : t.report.submitReport) : t.common.next}
         </Button>
       </div>
     </div>

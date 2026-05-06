@@ -1,7 +1,9 @@
-import { motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LineChart, Line, Cell } from "recharts";
-import { ArrowUpRight, TrendingDown, Users, Utensils, AlertTriangle } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell } from "recharts";
+import { ArrowUpRight, Users, Utensils, AlertTriangle } from "lucide-react";
+import { AnalyticsReportService } from "../../Services/analyticsReportService";
+import { ReportInsight } from "../../Services/types";
 
 const trendData = [
     { month: "Jan", stable: 65, atRisk: 25, critical: 10 },
@@ -20,6 +22,29 @@ const mealsData = [
 ];
 
 export function InsightsPage() {
+    const [insight, setInsight] = useState<ReportInsight | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchInsights = async () => {
+            try {
+                setLoading(true);
+                const data = await AnalyticsReportService.getInsights();
+                setInsight(data);
+            } catch (error) {
+                console.error("Failed to fetch insights:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchInsights();
+    }, []);
+
+    const predictionConfidence = typeof insight?.predictionConfidence === "number"
+        ? `${(insight.predictionConfidence * 100).toFixed(0)}% confidence`
+        : "Confidence unavailable";
+
     return (
         <div className="space-y-8">
             {/* Header */}
@@ -41,7 +66,7 @@ export function InsightsPage() {
                                 +12.5%
                             </span>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900">2,543</p>
+                        <p className="text-3xl font-bold text-gray-900">{loading ? "..." : (insight?.totalHouseholds ?? 0).toLocaleString()}</p>
                         <p className="text-sm text-gray-500">Total Households Monitored</p>
                     </CardContent>
                 </Card>
@@ -57,7 +82,7 @@ export function InsightsPage() {
                                 +5.2%
                             </span>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900">2.4</p>
+                        <p className="text-3xl font-bold text-gray-900">{loading ? "..." : (insight?.avgMealsPerDay ?? 0).toFixed(1)}</p>
                         <p className="text-sm text-gray-500">Avg Meals Per Day</p>
                     </CardContent>
                 </Card>
@@ -73,7 +98,7 @@ export function InsightsPage() {
                                 +2.1%
                             </span>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900">145</p>
+                        <p className="text-3xl font-bold text-gray-900">{loading ? "..." : (insight?.criticalAlerts ?? 0).toLocaleString()}</p>
                         <p className="text-sm text-gray-500">Critical Alerts (MoM)</p>
                     </CardContent>
                 </Card>
@@ -83,10 +108,11 @@ export function InsightsPage() {
                         <div className="mb-4">
                             <p className="text-sm text-gray-400 font-medium uppercase tracking-wider">Prediction</p>
                         </div>
-                        <p className="text-2xl font-bold text-white mb-2">Improving Trend</p>
+                        <p className="text-2xl font-bold text-white mb-2">{loading ? "Loading..." : insight?.prediction || "Stable Trend"}</p>
                         <p className="text-sm text-gray-400">
-                            Based on current data, food security is expected to stabilize in the next 14 days due to recent interventions.
+                            {loading ? "Running AI prediction..." : (insight?.predictionText || "No prediction available yet.")}
                         </p>
+                        <p className="text-xs text-gray-400 mt-3">{predictionConfidence}</p>
                     </CardContent>
                 </Card>
             </div>

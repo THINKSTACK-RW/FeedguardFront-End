@@ -1,7 +1,10 @@
 import { useLanguage } from '@/app/LanguageContext';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, Bell, CheckCircle, AlertTriangle } from 'lucide-react';
+import { AlertService } from '@/Services/alertService';
+import { Alert } from '@/Services/types';
 
 interface AlertsScreenProps {
   onNavigate: (screen: string) => void;
@@ -9,32 +12,40 @@ interface AlertsScreenProps {
 
 export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
   const { t } = useLanguage();
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Mock data
-  const alerts = [
-    {
-      id: 1,
-      type: 'info',
-      title: 'Food conditions being reviewed',
-      message: t.alerts.reviewMessage,
-      date: '2026-01-17',
-    },
-    {
-      id: 2,
-      type: 'success',
-      title: 'Support programs planned',
-      message: t.alerts.supportMessage,
-      date: '2026-01-15',
-    },
-  ];
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const data = await AlertService.getAlerts();
+        setAlerts(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load alerts');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAlerts();
+  }, []);
+
+  const activeAlerts = useMemo(
+    () => alerts.filter((alert) => alert.status !== 'resolved'),
+    [alerts]
+  );
 
   const getAlertIcon = (type: string) => {
     switch (type) {
-      case 'success':
+      case 'Stable':
         return <CheckCircle className="w-6 h-6 text-green-600" />;
-      case 'warning':
+      case 'Warning':
         return <AlertTriangle className="w-6 h-6 text-yellow-600" />;
-      case 'info':
+      case 'Critical':
+        return <Bell className="w-6 h-6 text-red-600" />;
       default:
         return <Bell className="w-6 h-6 text-green-600" />;
     }
@@ -42,11 +53,12 @@ export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
 
   const getAlertColor = (type: string) => {
     switch (type) {
-      case 'success':
+      case 'Stable':
         return 'bg-green-50 border-green-200';
-      case 'warning':
+      case 'Warning':
         return 'bg-yellow-50 border-yellow-200';
-      case 'info':
+      case 'Critical':
+        return 'bg-red-50 border-red-200';
       default:
         return 'bg-green-50 border-green-200';
     }
@@ -74,7 +86,15 @@ export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
 
       {/* Content */}
       <div className="flex-1 p-6 overflow-y-auto">
-        {alerts.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-8">
+            <p className="text-gray-500">Loading alerts...</p>
+          </div>
+        ) : error ? (
+          <Card className="p-4 border-2 border-red-200 bg-red-50">
+            <p className="text-sm text-red-700">{error}</p>
+          </Card>
+        ) : activeAlerts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <Bell className="w-10 h-10 text-gray-400" />
@@ -84,7 +104,7 @@ export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            {alerts.map((alert) => (
+            {activeAlerts.map((alert) => (
               <Card
                 key={alert.id}
                 className={`p-5 border-2 ${getAlertColor(alert.type)}`}
@@ -95,17 +115,13 @@ export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-800 mb-1">
-                      {alert.title}
+                      {alert.region}
                     </h3>
                     <p className="text-sm text-gray-600 mb-2">
                       {alert.message}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {new Date(alert.date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
+                      {alert.time} - {alert.affected} households
                     </p>
                   </div>
                 </div>

@@ -3,47 +3,74 @@ import { AlertCircle, AlertTriangle, CheckCircle, Clock, MapPin, ChevronRight, B
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-
-const alerts = [
-    {
-        id: 1,
-        region: "Kibera District",
-        type: "Critical",
-        message: "Severe food shortage reported by 45% of households.",
-        time: "10 mins ago",
-        affected: 450,
-        status: "new"
-    },
-    {
-        id: 2,
-        region: "Makina Village",
-        type: "Warning",
-        message: "Increasing price of maize flour reported.",
-        time: "2 hours ago",
-        affected: 120,
-        status: "investigating"
-    },
-    {
-        id: 3,
-        region: "Lindi Area",
-        type: "Stable",
-        message: "Food distribution completed successfully.",
-        time: "5 hours ago",
-        affected: 300,
-        status: "resolved"
-    },
-    {
-        id: 4,
-        region: "Soweto East",
-        type: "Critical",
-        message: "Water scarcity impacting cooking ability.",
-        time: "1 day ago",
-        affected: 890,
-        status: "new"
-    }
-];
+import { useEffect, useMemo, useState } from "react";
+import { AlertService } from "../../Services/alertService";
+import { Alert } from "../../Services/types";
 
 export function AlertsPage() {
+    const [alerts, setAlerts] = useState<Alert[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [runningAction, setRunningAction] = useState<string | null>(null);
+
+    const loadAlerts = async () => {
+        try {
+            setLoading(true);
+            setError("");
+            const data = await AlertService.getAlerts();
+            setAlerts(data);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to load alerts");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadAlerts();
+    }, []);
+
+    const activeAlerts = useMemo(
+        () => alerts.filter((alert) => alert.status !== "resolved"),
+        [alerts]
+    );
+
+    const handleGenerate = async () => {
+        try {
+            setRunningAction("generate");
+            await AlertService.generateAlerts();
+            await loadAlerts();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to generate alerts");
+        } finally {
+            setRunningAction(null);
+        }
+    };
+
+    const handleDismiss = async (id: string) => {
+        try {
+            setRunningAction(`dismiss-${id}`);
+            await AlertService.dismissAlert(id);
+            await loadAlerts();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to dismiss alert");
+        } finally {
+            setRunningAction(null);
+        }
+    };
+
+    const handleTakeAction = async (id: string) => {
+        try {
+            setRunningAction(`action-${id}`);
+            await AlertService.takeAction(id, "investigate");
+            await loadAlerts();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to update alert");
+        } finally {
+            setRunningAction(null);
+        }
+    };
+
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
             {/* Header */}
@@ -52,14 +79,32 @@ export function AlertsPage() {
                     <h2 className="text-3xl font-bold text-gray-900">Priority Alerts</h2>
                     <p className="text-gray-600 mt-1">Real-time notifications requiring attention</p>
                 </div>
-                <Button className="bg-[var(--sidebar-bg)] text-white hover:bg-gray-800">
+                <Button
+                    className="bg-[var(--sidebar-bg)] text-white hover:bg-gray-800"
+                    onClick={handleGenerate}
+                    disabled={runningAction === "generate"}
+                >
                     <Bell className="w-4 h-4 mr-2" />
-                    Manage Notifications
+                    {runningAction === "generate" ? "Generating..." : "Generate Alerts"}
                 </Button>
             </div>
 
+            {error && (
+                <Card className="border-red-200 bg-red-50">
+                    <CardContent className="p-4 text-red-700">{error}</CardContent>
+                </Card>
+            )}
+
             <div className="grid gap-4">
-                {alerts.map((alert, index) => (
+                {loading ? (
+                    <Card>
+                        <CardContent className="p-6 text-gray-600">Loading alerts...</CardContent>
+                    </Card>
+                ) : activeAlerts.length === 0 ? (
+                    <Card>
+                        <CardContent className="p-6 text-gray-600">No active alerts right now.</CardContent>
+                    </Card>
+                ) : activeAlerts.map((alert, index) => (
                     <motion.div
                         key={alert.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -94,6 +139,9 @@ export function AlertsPage() {
                             `}>
                                                         {alert.type}
                                                     </Badge>
+                                                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                                        AI-driven
+                                                    </Badge>
                                                 </div>
                                                 <p className="text-gray-600">{alert.message}</p>
                                             </div>
@@ -114,11 +162,23 @@ export function AlertsPage() {
                                             </div>
 
                                             <div className="ml-auto flex gap-2">
-                                                <Button size="sm" variant="outline">Dismiss</Button>
-                                                <Button size="sm" className={`${alert.type === 'Critical' ? 'bg-red-600 hover:bg-red-700' :
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => handleDismiss(alert.id)}
+                                                    disabled={runningAction === `dismiss-${alert.id}` || runningAction === `action-${alert.id}`}
+                                                >
+                                                    {runningAction === `dismiss-${alert.id}` ? "Dismissing..." : "Dismiss"}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => handleTakeAction(alert.id)}
+                                                    disabled={runningAction === `dismiss-${alert.id}` || runningAction === `action-${alert.id}`}
+                                                    className={`${alert.type === 'Critical' ? 'bg-red-600 hover:bg-red-700' :
                                                         alert.type === 'Warning' ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'
-                                                    } text-white`}>
-                                                    Take Action
+                                                    } text-white`}
+                                                >
+                                                    {runningAction === `action-${alert.id}` ? "Updating..." : "Take Action"}
                                                 </Button>
                                             </div>
                                         </div>

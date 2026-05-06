@@ -97,6 +97,7 @@ export interface ReportInsight {
     criticalAlerts: number;
     prediction: string;
     predictionText: string;
+    predictionConfidence?: number | null;
 }
 
 // --- Map ---
@@ -138,12 +139,20 @@ export interface FoodReportPayload {
     channel: string;
 }
 
+export interface FoodRiskPrediction {
+    risk_level: string;
+    confidence?: number | null;
+    source?: string;
+}
+
 export interface FoodReportResponse {
     message: string;
     response: {
         id: string;
         food_security_score: number;
         risk_level: string;
+        confidence?: number | null;
+        prediction_source?: string;
         submitted_at: string;
     };
 }
@@ -158,6 +167,7 @@ export interface FoodReportHistory {
     shocks_experienced: string[];
     risk_level: string;
     food_security_score: number;
+    ai_confidence?: number | null;
 }
 
 export interface FoodReportStats {
