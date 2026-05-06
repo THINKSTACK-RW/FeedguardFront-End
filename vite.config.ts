@@ -18,6 +18,10 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0', // Bind to all interfaces for Render
-    port: 10000, // Use Render's port
+    port: process.env.PORT ? Number(process.env.PORT) : 10000,
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: process.env.PORT ? Number(process.env.PORT) : 10000,
   },
 })
