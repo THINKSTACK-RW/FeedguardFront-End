@@ -4,7 +4,7 @@
  * You can also replace this entirely with Axios if preferred.
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://feedguardbackend.onrender.com/api';
 
 /**
  * Utility to build query strings from an object
