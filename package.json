@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite",
-    "start": "vite preview"
+    "build": "node init && vite build",
+    "dev": "node init && vite",
+    "start": "node init && vite preview"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
